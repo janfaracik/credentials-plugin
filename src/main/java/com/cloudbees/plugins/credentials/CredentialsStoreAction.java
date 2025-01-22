@@ -288,7 +288,11 @@ public abstract class CredentialsStoreAction
     public ContextMenu getContextMenu(String prefix) {
         ContextMenu menu = new ContextMenu();
         if (getStore().isDomainsModifiable() && getStore().hasPermission(MANAGE_DOMAINS)) {
-            menu.add(new MenuItem().withDisplayName(Messages.CredentialsStoreAction_AddDomainAction()).withUrl( ContextMenuIconUtils.buildUrl(prefix, "newDomain")).withIconClass("symbol-add")
+            menu.add(
+                new MenuItem()
+                    .withDisplayName(Messages.CredentialsStoreAction_AddDomainAction())
+                    .withUrl(ContextMenuIconUtils.buildUrl(prefix, "newDomain"))
+                    .withIconClass("symbol-add")
             );
         }
         for (Action action : getActions()) {
