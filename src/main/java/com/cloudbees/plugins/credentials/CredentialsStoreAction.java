@@ -288,11 +288,9 @@ public abstract class CredentialsStoreAction
     public ContextMenu getContextMenu(String prefix) {
         ContextMenu menu = new ContextMenu();
         if (getStore().isDomainsModifiable() && getStore().hasPermission(MANAGE_DOMAINS)) {
-            menu.add(
-                new MenuItem()
-                    .withDisplayName(Messages.CredentialsStoreAction_AddDomainAction())
-                    .withUrl(ContextMenuIconUtils.buildUrl(prefix, "newDomain"))
-                    .withIconClass("symbol-add")
+            menu.add(ContextMenuIconUtils.buildUrl(prefix, "newDomain"),
+                    getMenuItemIconUrlByClassSpec("icon-credentials-new-domain icon-md"),
+                    Messages.CredentialsStoreAction_AddDomainAction()
             );
         }
         for (Action action : getActions()) {
@@ -878,24 +876,21 @@ public abstract class CredentialsStoreAction
             if (getStore().hasPermission(CREATE) || (getStore().hasPermission(MANAGE_DOMAINS) && !domain.isGlobal())) {
                 ContextMenu result = new ContextMenu();
                 if (getStore().hasPermission(CREATE)) {
-                    result.add(new MenuItem()
-                            .withDisplayName( Messages.CredentialsStoreAction_AddCredentialsAction())
-                            .withUrl(ContextMenuIconUtils.buildUrl(prefix, "newCredentials"))
-                            .withIconClass("symbol-add")
-                    );
+                    result.add(new MenuItem(
+                            ContextMenuIconUtils.buildUrl(prefix, "newCredentials"),
+                            getMenuItemIconUrlByClassSpec("icon-credentials-new-credential icon-md"),
+                            Messages.CredentialsStoreAction_AddCredentialsAction()
+                    ));
                 }
                 if (getStore().hasPermission(MANAGE_DOMAINS) && !domain.isGlobal()) {
-                    result.add(
-                            new MenuItem()
-                                    .withDisplayName(Messages.CredentialsStoreAction_ConfigureDomainAction())
-                                    .withUrl(ContextMenuIconUtils.buildUrl(prefix, "configure"))
-                                    .withIconClass("symbol-settings")
-                    );
-                    result.add(new MenuItem()
-                                    .withDisplayName(Messages.CredentialsStoreAction_DeleteDomainAction())
-                                    .withUrl(ContextMenuIconUtils.buildUrl(prefix, "delete"))
-                                    .withIconClass("symbol-trash")
-                    );
+                    result.add(new MenuItem(ContextMenuIconUtils.buildUrl(prefix, "configure"),
+                            getMenuItemIconUrlByClassSpec("icon-setting icon-md"),
+                            Messages.CredentialsStoreAction_ConfigureDomainAction()
+                    ));
+                    result.add(new MenuItem(ContextMenuIconUtils.buildUrl(prefix, "delete"),
+                            getMenuItemIconUrlByClassSpec("icon-edit-delete icon-md"),
+                            Messages.CredentialsStoreAction_DeleteDomainAction()
+                    ));
                 }
                 return result.items.isEmpty() ? null : result;
             }

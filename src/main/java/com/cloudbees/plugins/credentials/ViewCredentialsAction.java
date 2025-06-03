@@ -55,10 +55,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import jenkins.model.Jenkins;
+import jenkins.model.ModelObjectWithContextMenu;
 import jenkins.model.TransientActionFactory;
 import org.jenkins.ui.icon.IconSpec;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
 import org.springframework.security.core.Authentication;
@@ -67,7 +70,7 @@ import org.springframework.security.core.Authentication;
  * An {@link Action} that lets you view the available credentials for any {@link ModelObject}.
  */
 @ExportedBean
-public class ViewCredentialsAction implements Action, IconSpec, AccessControlled {
+public class ViewCredentialsAction implements Action, IconSpec, AccessControlled, ModelObjectWithContextMenu {
 
     /**
      * Expose {@link CredentialsProvider#VIEW} for Jelly.
@@ -108,7 +111,9 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
      */
     @Override
     public String getIconFileName() {
-        return isVisible() ? "symbol-credentials plugin-credentials" : null;
+        return isVisible()
+                ? "symbol-credentials plugin-credentials"
+                : null;
     }
 
     /**
@@ -151,8 +156,7 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
     }
 
     private Stream<CredentialsStore> streamStores() {
-        return StreamSupport.stream(
-                CredentialsProvider.lookupStores(getContext()).spliterator(), false);
+        return StreamSupport.stream(CredentialsProvider.lookupStores(getContext()).spliterator(), false);
     }
 
     /**
@@ -164,9 +168,9 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
     @NonNull
     @SuppressWarnings("unused") // Stapler XML/JSON API
     @Exported(name = "stores")
-    public Map<String, CredentialsStoreAction> getStoreActionsMap() {
-        Map<String, CredentialsStoreAction> result = new TreeMap<>();
-        for (CredentialsStoreAction a : getStoreActions()) {
+    public Map<String,CredentialsStoreAction> getStoreActionsMap() {
+        Map<String,CredentialsStoreAction> result = new TreeMap<>();
+        for (CredentialsStoreAction a: getStoreActions()) {
             result.put(a.getUrlName(), a);
         }
         return result;
@@ -182,9 +186,8 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
     @SuppressWarnings("unused") // Stapler binding
     public CredentialsStoreAction getStore(String name) {
         return streamStores()
-                .filter(s -> context == s.getContext()
-                        && s.getStoreAction() != null
-                        && name.equals(s.getStoreAction().getUrlName()))
+                .filter(s -> context == s.getContext() && s.getStoreAction() != null &&
+                        name.equals(s.getStoreAction().getUrlName()))
                 .findFirst()
                 .filter(s -> s.hasPermission(CredentialsProvider.VIEW))
                 .map(CredentialsStore::getStoreAction)
@@ -221,8 +224,7 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
     public boolean isVisible() {
         if (context instanceof AccessControlled) {
             AccessControlled accessControlled = (AccessControlled) this.context;
-            if (isVisibleForAdministrator(accessControlled)
-                    || !accessControlled.hasPermission(CredentialsProvider.VIEW)) {
+            if (isVisibleForAdministrator(accessControlled) || !accessControlled.hasPermission(CredentialsProvider.VIEW)) {
                 // must have permission
                 return false;
             }
@@ -292,7 +294,9 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
      */
     @Override
     public String getIconClassName() {
-        return isVisible() ? "symbol-credentials plugin-credentials" : null;
+        return isVisible()
+                ? "symbol-credentials plugin-credentials"
+                : null;
     }
 
     /**
@@ -387,6 +391,25 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
     }
 
     /**
+     * {@inheritDoc}
+     */
+    // In the general case we would implement ModelObjectWithChildren as the child actions could be viewed as children
+    // but in this case we expose them in the sidebar, so they are more correctly part of the context menu.
+    @Override
+    public ContextMenu doContextMenu(StaplerRequest2 request, StaplerResponse2 response) {
+        ContextMenu menu = new ContextMenu();
+        for (CredentialsStoreAction action : getStoreActions()) {
+            ContextMenuIconUtils.addMenuItem(
+                    menu,
+                    "store",
+                    action,
+                    action.getContextMenu(ContextMenuIconUtils.buildUrl("store", action.getUrlName()))
+            );
+        }
+        return menu;
+    }
+
+    /**
      * Add the {@link ViewCredentialsAction} to all {@link TopLevelItem} instances.
      */
     @Extension(ordinal = -1000)
@@ -472,12 +495,8 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
          * @param credentials the backing {@link Credentials}.
          * @param masked      whether this entry is masked or not.
          */
-        public TableEntry(
-                CredentialsProvider provider,
-                CredentialsStore store,
-                Domain domain,
-                Credentials credentials,
-                boolean masked) {
+        public TableEntry(CredentialsProvider provider, CredentialsStore store,
+                          Domain domain, Credentials credentials, boolean masked) {
             this.provider = provider;
             this.store = store;
             this.domain = domain;
@@ -519,9 +538,8 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
          * @throws IOException if there was an issue with formatting this using the markup formatter.
          */
         public String getDescription() throws IOException {
-            return credentials instanceof StandardCredentials
-                    ? Jenkins.get().getMarkupFormatter().translate(((StandardCredentials) credentials).getDescription())
-                    : null;
+            return credentials instanceof StandardCredentials ? Jenkins.get().getMarkupFormatter()
+                    .translate(((StandardCredentials) credentials).getDescription()) : null;
         }
 
         /**
@@ -577,4 +595,5 @@ public class ViewCredentialsAction implements Action, IconSpec, AccessControlled
             return masked;
         }
     }
+
 }

@@ -495,8 +495,7 @@ public class UserCredentialsProvider extends CredentialsProvider {
              */
             @Override
             public boolean isEnabled() {
-                // TODO - confirm no negative side effects
-                return false;
+                return !all().isEmpty();
             }
 
             /**
